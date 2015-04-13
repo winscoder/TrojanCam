@@ -6,6 +6,7 @@ import org.opencv.android.CameraBridgeViewBase.CvCameraViewFrame;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewListener2;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
+import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 
 import android.app.Activity;
@@ -25,6 +26,7 @@ public class TrojanCam extends Activity implements CvCameraViewListener2 {
     private CameraBridgeViewBase mOpenCvCameraView;
     private boolean              mIsJavaCamera = true;
     private MenuItem             mItemSwitchCamera = null;
+    private Mat                  mRgba;
 
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
@@ -33,6 +35,7 @@ public class TrojanCam extends Activity implements CvCameraViewListener2 {
                 case LoaderCallbackInterface.SUCCESS:
                 {
                     Log.i(TAG, "OpenCV loaded successfully");
+                    System.loadLibrary("TrojanCam");
                     mOpenCvCameraView.enableView();
                 } break;
                 default:
@@ -110,7 +113,7 @@ public class TrojanCam extends Activity implements CvCameraViewListener2 {
             mIsJavaCamera = !mIsJavaCamera;
 
             if (mIsJavaCamera) {
-                mOpenCvCameraView = (CameraBridgeViewBase) findViewById(R.id.tutorial1_activity_java_surface_view);
+            	mOpenCvCameraView = (CameraBridgeViewBase) findViewById(R.id.tutorial1_activity_java_surface_view);
                 toastMesage = "Java Camera";
             } else {
                 mOpenCvCameraView = (CameraBridgeViewBase) findViewById(R.id.tutorial1_activity_native_surface_view);
@@ -128,13 +131,21 @@ public class TrojanCam extends Activity implements CvCameraViewListener2 {
     }
 
     public void onCameraViewStarted(int width, int height) {
+    	mRgba = new Mat(height, width, CvType.CV_8UC4);
+
+    	
     }
 
     public void onCameraViewStopped() {
+    	mRgba.release();
     }
 
     public Mat onCameraFrame(CvCameraViewFrame inputFrame) {
-        return inputFrame.rgba();
+    	mRgba = inputFrame.rgba();
+    	orbfeature(mRgba.getNativeObjAddr());
+        return mRgba;
     }
+    
+    private native int orbfeature(long addrRgba);
 	
 }
